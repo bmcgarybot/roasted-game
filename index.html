@@ -86,6 +86,7 @@ footer{font-size:.6rem;color:#444;text-align:center;position:fixed;bottom:8px;pa
 <p class="sub" style="font-size:.7rem">"Not safe for work. Or friends. Or anyone with feelings."</p>
 <button class="btn btn-red" onclick="S('setup')">🔥 New Game</button>
 <button class="btn btn-out btn-sm" onclick="S('rules')">📖 How to Play</button>
+<button class="btn btn-out btn-sm" onclick="S('custom')">✏️ Custom Cards</button>
 <footer>Cards Against Humanity grew up, got therapy, and started drinking again.</footer>
 <div class="age">🔞 18+ Only</div>
 </div>
@@ -108,6 +109,30 @@ footer{font-size:.6rem;color:#444;text-align:center;position:fixed;bottom:8px;pa
 <p>🎯 Make It Personal — use their name</p>
 </div>
 <button class="btn btn-out btn-sm" onclick="S('title')">← Back</button>
+</div>
+<!-- CUSTOM CARDS -->
+<div id="s-custom" class="screen">
+<h2>Custom Cards</h2>
+<div style="width:100%;max-width:380px;font-size:.85rem;color:var(--gray);line-height:1.6;max-height:75vh;overflow-y:auto;padding:8px">
+<p style="margin-bottom:12px">Add your own savage cards. These get mixed into the deck. The more personal, the better.</p>
+
+<div style="margin-bottom:16px">
+<label style="color:var(--white);font-weight:700;font-size:.9rem;display:block;margin-bottom:6px">Setup Cards (Black)</label>
+<p style="font-size:.75rem;margin-bottom:6px">Opening lines that set up the roast. End with "..." </p>
+<textarea id="customSetups" placeholder="Your dating life is basically...&#10;You peaked when you...&#10;Your ex describes you as..." style="width:100%;min-height:100px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:.85rem;resize:vertical;font-family:inherit"></textarea>
+</div>
+
+<div style="margin-bottom:16px">
+<label style="color:var(--red);font-weight:700;font-size:.9rem;display:block;margin-bottom:6px">Punch Cards (Red)</label>
+<p style="font-size:.75rem;margin-bottom:6px">The savage endings. Start with "..."</p>
+<textarea id="customPunches" placeholder="...a dumpster fire at a gender reveal party.&#10;...the human version of a terms of service.&#10;...a group chat everyone muted." style="width:100%;min-height:100px;background:#1a1a1a;border:1px solid rgba(220,38,38,.3);color:#fff;border-radius:8px;padding:10px;font-size:.85rem;resize:vertical;font-family:inherit"></textarea>
+</div>
+
+<p id="customCount" style="font-size:.75rem;color:var(--gray);margin-bottom:8px"></p>
+<button class="btn btn-red btn-sm" onclick="saveCustomCards()">💾 Save Cards</button>
+<button class="btn btn-out btn-sm" onclick="clearCustomCards()" style="margin-top:6px">🗑️ Clear All Custom</button>
+</div>
+<button class="btn btn-out btn-sm" onclick="S('title')" style="margin-top:12px">← Back</button>
 </div>
 <!-- SETUP -->
 <div id="s-setup" class="screen">
@@ -243,7 +268,7 @@ setup:[
 "You act like your therapist...",
 "Your sex life sounds like...",
 "If trauma were a brand, you'd be...",
-"You look like the type of person who...",
+"Your Uber rating in life is...",
 "Your personality is basically...",
 "You probably think deep conversations mean...",
 "You give off the energy of someone who...",
@@ -254,7 +279,7 @@ setup:[
 "You have the confidence of someone who...",
 "Your vibe is basically...",
 "If mediocrity were a superpower, you'd be...",
-"You seem like the kind of person who...",
+"If your life had terms of service, nobody would...",
 "Your love language is clearly...",
 "If self-awareness had a restraining order against you, it'd be because...",
 "You carry yourself like...",
@@ -269,7 +294,7 @@ setup:[
 "You have the charm of...",
 "Your Tinder bio probably reads...",
 "If awkwardness were an art form, you'd be...",
-"You radiate the same energy as...",
+"Your greatest accomplishment is probably...",
 "Your laugh sounds like...",
 "If people could return you, the receipt would say...",
 "Your cooking probably tastes like...",
@@ -336,11 +361,11 @@ setup:[
 "Your DMs probably look like...",
 "If insomnia were a person, it'd...",
 "Your backup plan is probably...",
-"You have the charm of someone who...",
+"Even your imaginary friend...",
 "If your life were a subreddit, it'd be...",
 "Your ex probably describes you as...",
 "If low standards were a lifestyle, you'd be...",
-"You have the same energy as...",
+"Your autobiography would be called...",
 "Your ideal vacation is probably...",
 "If being forgettable were a skill, you'd be...",
 "Your autobiography would be called...",
@@ -363,7 +388,7 @@ setup:[
 "If your personality were a spice, it'd be...",
 "Your search history at 3 AM is probably...",
 "If disappointment had a LinkedIn, yours would say...",
-"You seem like someone who'd...",
+"The search warrant for your browser says...",
 "Your energy at parties is...",
 "If red flags were currency, you'd be..."
 ],
@@ -692,6 +717,55 @@ function updateSetup(){
 // =====================================================
 // GAME START
 // =====================================================
+// Custom Cards
+function loadCustomCards(){
+  try {
+    var cs = JSON.parse(localStorage.getItem('roasted_custom_setups')||'[]');
+    var cp = JSON.parse(localStorage.getItem('roasted_custom_punches')||'[]');
+    if(cs.length) CARDS.setup.push(...cs);
+    if(cp.length) CARDS.punch.push(...cp);
+  } catch(e){}
+  updateCustomCount();
+}
+function saveCustomCards(){
+  var st = document.getElementById('customSetups').value.trim();
+  var pu = document.getElementById('customPunches').value.trim();
+  var newS = st ? st.split('\n').map(function(s){return s.trim()}).filter(function(s){return s.length>3}) : [];
+  var newP = pu ? pu.split('\n').map(function(s){return s.trim()}).filter(function(s){return s.length>3}) : [];
+  var oldS = JSON.parse(localStorage.getItem('roasted_custom_setups')||'[]');
+  var oldP = JSON.parse(localStorage.getItem('roasted_custom_punches')||'[]');
+  var merged_s = oldS.concat(newS);
+  var merged_p = oldP.concat(newP);
+  // Deduplicate
+  merged_s = Array.from(new Set(merged_s));
+  merged_p = Array.from(new Set(merged_p));
+  localStorage.setItem('roasted_custom_setups', JSON.stringify(merged_s));
+  localStorage.setItem('roasted_custom_punches', JSON.stringify(merged_p));
+  // Add to live deck
+  newS.forEach(function(c){ if(CARDS.setup.indexOf(c)===-1) CARDS.setup.push(c); });
+  newP.forEach(function(c){ if(CARDS.punch.indexOf(c)===-1) CARDS.punch.push(c); });
+  document.getElementById('customSetups').value='';
+  document.getElementById('customPunches').value='';
+  updateCustomCount();
+  alert('Saved! ' + newS.length + ' setup + ' + newP.length + ' punch cards added.');
+}
+function clearCustomCards(){
+  if(!confirm('Delete all your custom cards?')) return;
+  localStorage.removeItem('roasted_custom_setups');
+  localStorage.removeItem('roasted_custom_punches');
+  // Reload to reset deck
+  location.reload();
+}
+function updateCustomCount(){
+  var el = document.getElementById('customCount');
+  if(!el) return;
+  var cs = JSON.parse(localStorage.getItem('roasted_custom_setups')||'[]');
+  var cp = JSON.parse(localStorage.getItem('roasted_custom_punches')||'[]');
+  el.textContent = cs.length + ' custom setups + ' + cp.length + ' custom punches saved. Total deck: ' + CARDS.setup.length + ' setup / ' + CARDS.punch.length + ' punch.';
+}
+// Load custom cards on startup
+loadCustomCards();
+
 function startGame(){
   G.players=G.players.filter(p=>p.name.length>0);
   if(G.players.length<4)return;

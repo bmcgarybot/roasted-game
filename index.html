@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#dc2626">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ROASTED: Full Send Edition</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--red:#dc2626;--red-dark:#991b1b;--gold:#eab308;--gold-dark:#a16207;--white:#f5f5f5;--gray:#737373;--card-bg:#1a1a1a}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--white);touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:420px;height:100dvh;padding:20px 0;gap:10px;animation:fadeIn .3s ease}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes cardFlip{0%{transform:rotateY(90deg) scale(.8);opacity:0}100%{transform:rotateY(0) scale(1);opacity:1}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fireGlow{0%,100%{text-shadow:0 0 20px #dc2626,0 0 40px #dc262688}50%{text-shadow:0 0 30px #dc2626,0 0 60px #dc2626aa}}
+@keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+h1{font-size:clamp(2rem,8vw,3.2rem);font-weight:900;text-transform:uppercase;letter-spacing:2px;line-height:1.1}
+h2{font-size:clamp(1.3rem,5vw,2rem);font-weight:800;text-transform:uppercase;letter-spacing:1px}
+h3{font-size:clamp(1.1rem,4vw,1.5rem);font-weight:700}
+.sub{color:var(--gray);font-size:clamp(.75rem,2.5vw,.9rem);font-style:italic;text-align:center;max-width:300px;line-height:1.4}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;border:none;border-radius:12px;font-size:clamp(1rem,3.5vw,1.15rem);font-weight:800;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .15s;min-height:50px;width:100%;max-width:320px}
+.btn:active{transform:scale(.96)}
+.btn-red{background:var(--red);color:var(--white)}
+.btn-out{background:transparent;color:var(--white);border:2px solid var(--red)}
+.btn-gold{background:var(--gold);color:#0a0a0a}
+.btn-dark{background:#262626;color:var(--white);border:1px solid #404040}
+.btn-sm{padding:10px 20px;font-size:.85rem;min-height:42px}
+.btn:disabled{opacity:.4;pointer-events:none}
+.fire{color:var(--red);animation:fireGlow 2s ease-in-out infinite}
+.gold{color:var(--gold)}.red{color:var(--red)}
+.divider{width:60px;height:3px;background:var(--red);border-radius:2px}
+.player-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:6px;max-height:45vh;overflow-y:auto;padding:4px}
+.player-row{display:flex;gap:8px;align-items:center;animation:slideUp .3s ease}
+.player-row input{flex:1;padding:10px 14px;background:#1a1a1a;border:2px solid #333;border-radius:10px;color:var(--white);font-size:1rem;font-weight:600;outline:none;transition:border-color .2s}
+.player-row input:focus{border-color:var(--red)}
+.player-row .rbtn{width:36px;height:36px;border-radius:50%;background:#333;border:none;color:var(--red);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card{border-radius:14px;padding:14px;font-weight:700;font-size:clamp(.8rem,2.8vw,.95rem);line-height:1.35;min-height:70px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:all .2s;position:relative;animation:cardFlip .4s ease}
+.card-s{background:#111;border:2px solid var(--red);color:var(--white)}
+.card-p{background:var(--red);border:2px solid var(--red-dark);color:var(--white)}
+.card-w{background:linear-gradient(135deg,var(--gold),#f59e0b);border:2px solid var(--gold-dark);color:#0a0a0a}
+.card.sel{transform:scale(1.03);box-shadow:0 0 20px var(--red)88;border-color:var(--white)}
+.card-w.sel{box-shadow:0 0 20px var(--gold)88;border-color:var(--white)}
+.hand{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:360px;max-height:28vh;overflow-y:auto;padding:4px}
+.reveal-card{width:100%;max-width:360px;border-radius:16px;padding:24px;background:#111;border:2px solid var(--red);animation:cardFlip .6s ease;text-align:center}
+.r-setup{font-size:clamp(1rem,3.5vw,1.2rem);color:var(--gray);font-weight:600;margin-bottom:10px}
+.r-punch{font-size:clamp(1.1rem,4vw,1.5rem);color:var(--white);font-weight:800}
+.r-wild{font-size:clamp(.8rem,2.5vw,.95rem);color:var(--gold);font-weight:700;margin-top:10px;padding-top:10px;border-top:1px solid #333}
+.r-author{font-size:.8rem;color:var(--red);font-weight:700;margin-top:12px;text-transform:uppercase}
+.vote-opts{width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding:4px}
+.vote-card{border-radius:12px;padding:12px 14px;background:#1a1a1a;border:2px solid #333;cursor:pointer;transition:all .2s}
+.vote-card:active{transform:scale(.98)}
+.vote-card.voted{border-color:var(--red);box-shadow:0 0 12px var(--red)44}
+.scoreboard{width:100%;max-width:340px;display:flex;flex-direction:column;gap:5px;max-height:40vh;overflow-y:auto}
+.score-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#1a1a1a;border-radius:10px;border:1px solid #262626}
+.score-row.sw{border-color:var(--red);background:#1a1111}
+.score-row.st{border-color:var(--gold);background:#1a1a11}
+.privacy{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;height:100%}
+.pname{font-size:clamp(1.8rem,7vw,2.8rem);font-weight:900;text-transform:uppercase;color:var(--red);animation:pulse 2s ease-in-out infinite}
+.crown{font-size:clamp(3.5rem,14vw,5.5rem);animation:bounce 1s ease-in-out infinite}
+.wname{font-size:clamp(1.8rem,7vw,2.8rem);font-weight:900;color:var(--red);text-transform:uppercase;animation:fireGlow 2s ease-in-out infinite}
+.rbadge{font-size:.8rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:2px}
+.tname{font-size:clamp(1.6rem,6.5vw,2.3rem);font-weight:900;color:var(--red);text-transform:uppercase;text-align:center;animation:fireGlow 2s ease-in-out infinite}
+.slabel{font-size:.72rem;color:var(--gray);text-transform:uppercase;letter-spacing:2px;font-weight:700;align-self:flex-start;max-width:360px;width:100%;padding-left:4px}
+.wbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--gold-dark);color:var(--white);border-radius:8px;font-size:.7rem;font-weight:700}
+.confetti-piece{position:fixed;top:-20px;width:10px;height:10px;border-radius:2px;animation:confetti 2.5s ease-in forwards;pointer-events:none;z-index:999}
+footer{font-size:.6rem;color:#444;text-align:center;position:fixed;bottom:8px;padding:0 20px}
+.age{font-size:.6rem;color:#555;position:fixed;bottom:22px}
+</style>
+</head>
+<body>
+<!-- TITLE -->
+<div id="s-title" class="screen active">
+<div style="font-size:clamp(3rem,12vw,5rem)">🔥</div>
+<h1 class="fire">ROASTED</h1>
+<h3 style="color:var(--gray);font-weight:600;letter-spacing:3px;margin-top:-4px">FULL SEND EDITION</h3>
+<div class="divider"></div>
+<p class="sub">"The game that ends friendships... temporarily."</p>
+<p class="sub" style="font-size:.7rem">"Not safe for work. Or friends. Or anyone with feelings."</p>
+<button class="btn btn-red" onclick="S('setup')">🔥 New Game</button>
+<button class="btn btn-out btn-sm" onclick="S('rules')">📖 How to Play</button>
+<footer>Cards Against Humanity grew up, got therapy, and started drinking again.</footer>
+<div class="age">🔞 18+ Only</div>
+</div>
+<!-- RULES -->
+<div id="s-rules" class="screen">
+<h2>How to Play</h2>
+<div style="width:100%;max-width:340px;font-size:.85rem;color:var(--gray);line-height:1.6;max-height:70vh;overflow-y:auto;padding:8px;text-align:left">
+<p style="color:var(--white);font-weight:700;margin-bottom:8px">4-10 players. One device. Zero mercy.</p>
+<p><span class="red">1.</span> Each round, one player is the <b>TARGET</b>.</p>
+<p><span class="red">2.</span> Everyone else gets cards. Pick one <b>SETUP</b> (black) + one <b class="red">PUNCH</b> (red).</p>
+<p><span class="red">3.</span> Optional: play a <b class="gold">WILD</b> (gold) card for chaos.</p>
+<p><span class="red">4.</span> Target reads each combo aloud. Everyone votes funniest.</p>
+<p><span class="red">5.</span> Winner = 😭 Tear of Laughter. Target = 🛋️ Therapy Token.</p>
+<p><span class="red">6.</span> <b>First to 5 Tears wins!</b> 3 Therapy Tokens = pity prize.</p>
+<p style="margin-top:12px;color:var(--gold);font-weight:700">Wild Cards:</p>
+<p>⚡ Double Tap — play TWO punches</p>
+<p>💀 Group Roast — everyone attacks</p>
+<p>🔄 Reverse Roast — target roasts back</p>
+<p>🪞 You Wish — target self-roasts</p>
+<p>🎯 Make It Personal — use their name</p>
+</div>
+<button class="btn btn-out btn-sm" onclick="S('title')">← Back</button>
+</div>
+<!-- SETUP -->
+<div id="s-setup" class="screen">
+<h2>Who's Getting Roasted?</h2>
+<p class="sub">Enter 4-10 player names</p>
+<div id="plist" class="player-list"></div>
+<div style="display:flex;gap:8px;width:100%;max-width:340px">
+<button class="btn btn-dark btn-sm" onclick="addP()" id="badd" style="flex:1">+ Add Player</button>
+</div>
+<p id="pcount" style="font-size:.8rem;color:var(--gray)"></p>
+<button class="btn btn-red" onclick="startGame()" id="bstart" disabled>🔥 Start Game</button>
+<button class="btn btn-out btn-sm" onclick="S('title')">← Back</button>
+</div>
+<!-- ROUND INTRO -->
+<div id="s-round" class="screen">
+<p class="rbadge" id="rlabel">Round 1</p>
+<div class="divider"></div>
+<p style="font-size:.85rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-top:6px">This Round's Victim</p>
+<p class="tname" id="tname"></p>
+<div style="font-size:2.5rem">🎯</div>
+<div id="rplayers" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:340px"></div>
+<button class="btn btn-red" onclick="startRound()">⚔️ Start Round</button>
+</div>
+<!-- PASS -->
+<div id="s-pass" class="screen">
+<div class="privacy">
+<p style="font-size:.85rem;color:var(--gray);text-transform:uppercase;letter-spacing:3px">Pass the device to</p>
+<p class="pname" id="passn"></p>
+<div style="font-size:2.5rem">👇</div>
+<p class="sub">Don't peek. Seriously.</p>
+<button class="btn btn-red" onclick="showSelect()">I'm Ready</button>
+</div>
+</div>
+<!-- SELECT -->
+<div id="s-select" class="screen">
+<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:360px">
+<h3 id="selpn" style="font-size:1rem"></h3>
+<span id="selwb" class="wbadge" style="display:none">⚡ Wild</span>
+</div>
+<p class="slabel">Pick a Setup ■</p>
+<div id="shand" class="hand"></div>
+<p class="slabel">Pick a Punch ●</p>
+<div id="phand" class="hand"></div>
+<div id="wsec" style="display:none;width:100%;max-width:360px">
+<p class="slabel">Play Wild? ★ <span style="font-size:.6rem;color:var(--gray)">(optional — tap to toggle)</span></p>
+<div id="whand" style="padding:4px"></div>
+</div>
+<button class="btn btn-red" onclick="lockIn()" id="block" disabled>🔒 Lock In</button>
+</div>
+<!-- DOUBLE TAP -->
+<div id="s-double" class="screen">
+<h2 class="gold">⚡ Double Tap!</h2>
+<p class="sub">Pick a SECOND Punch card</p>
+<div id="dhand" class="hand"></div>
+<button class="btn btn-gold" onclick="lockDouble()" id="bdlock" disabled>🔒 Lock Second Punch</button>
+</div>
+<!-- REVEAL -->
+<div id="s-reveal" class="screen">
+<p class="rbadge">The Roasts Are In</p>
+<p style="font-size:.8rem;color:var(--gray)">Target: <span class="red" id="revtgt"></span></p>
+<div class="divider"></div>
+<div id="revcard" class="reveal-card" style="display:none">
+<p class="r-setup" id="revs"></p>
+<p class="r-punch" id="revp"></p>
+<p class="r-wild" id="revw" style="display:none"></p>
+<p class="r-author" id="reva"></p>
+</div>
+<p id="revc" style="font-size:.8rem;color:var(--gray);margin-top:6px"></p>
+<button class="btn btn-red" onclick="nextReveal()" id="breveal">Show First Roast</button>
+</div>
+<!-- VOTE PASS -->
+<div id="s-vpass" class="screen">
+<div class="privacy">
+<p style="font-size:.85rem;color:var(--gray);text-transform:uppercase;letter-spacing:3px">Pass the device to</p>
+<p class="pname" id="vpn"></p>
+<p style="font-size:.8rem;color:var(--gray)">Time to vote for the funniest roast</p>
+<button class="btn btn-red" onclick="showVote()">I'm Ready to Vote</button>
+</div>
+</div>
+<!-- VOTE -->
+<div id="s-vote" class="screen">
+<h3><span id="votern"></span>'s Vote</h3>
+<p class="sub" style="margin-bottom:2px">Pick the funniest (not yours)</p>
+<div id="vopts" class="vote-opts"></div>
+<button class="btn btn-red" onclick="submitVote()" id="bvote" disabled>✅ Submit Vote</button>
+</div>
+<!-- RESULTS -->
+<div id="s-results" class="screen">
+<p class="rbadge" id="resrl">Round 1 Results</p>
+<div class="divider"></div>
+<div id="reswin" style="text-align:center;margin:6px 0">
+<p style="font-size:2.5rem">😭</p>
+<h2 id="reswn" class="fire"></h2>
+<p style="color:var(--gray);font-size:.85rem" id="reswl">Wins this round!</p>
+</div>
+<div id="resbr" style="width:100%;max-width:340px;display:none">
+<p class="slabel">The Winning Roast</p>
+<div style="background:#1a1a1a;border:2px solid var(--red);border-radius:12px;padding:12px;margin-top:4px">
+<p style="color:var(--gray);font-size:.85rem" id="resrs"></p>
+<p style="font-weight:700;font-size:1rem;margin-top:4px" id="resrp"></p>
+</div>
+</div>
+<p class="slabel" style="margin-top:6px">Scoreboard</p>
+<div id="ressb" class="scoreboard"></div>
+<button class="btn btn-red" onclick="nextRound()" id="bnr">Next Round →</button>
+</div>
+<!-- GAME OVER -->
+<div id="s-gameover" class="screen">
+<div class="crown">👑</div>
+<p style="font-size:.85rem;color:var(--gray);text-transform:uppercase;letter-spacing:3px">The Roast Master</p>
+<p class="wname" id="gow"></p>
+<p style="font-size:1.1rem">with <span class="red" style="font-weight:900">5</span> Tears of Laughter</p>
+<div class="divider"></div>
+<p class="slabel" style="margin-top:6px">Final Scores</p>
+<div id="gosb" class="scoreboard"></div>
+<div id="goth" style="text-align:center;margin-top:6px;display:none">
+<p style="font-size:.85rem;color:var(--gold)">🛋️ Pity Prize: <span id="gothn" style="font-weight:700"></span></p>
+<p style="font-size:.7rem;color:var(--gray)">Most therapy tokens. Bless their heart.</p>
+</div>
+<button class="btn btn-red" onclick="playAgain()">🔥 Play Again</button>
+<button class="btn btn-out btn-sm" onclick="S('title')">Back to Title</button>
+</div>
+
+<script>
+// =====================================================
+// CARD DATABASE — 130 Setups, 190 Punches, 32 Wilds
+// =====================================================
+const CARDS={
+setup:[
+"You look like someone who...",
+"Your spirit animal is...",
+"If insecurity were an Olympic sport, you'd...",
+"You act like your therapist...",
+"Your sex life sounds like...",
+"If trauma were a brand, you'd be...",
+"You look like the type of person who...",
+"Your personality is basically...",
+"You probably think deep conversations mean...",
+"You give off the energy of someone who...",
+"Your dating profile probably says...",
+"If disappointment had a face, it would...",
+"You look like you peaked when...",
+"Your idea of self-care is...",
+"You have the confidence of someone who...",
+"Your vibe is basically...",
+"If mediocrity were a superpower, you'd be...",
+"You seem like the kind of person who...",
+"Your love language is clearly...",
+"If self-awareness had a restraining order against you, it'd be because...",
+"You carry yourself like...",
+"Your best quality is probably...",
+"You have the emotional range of...",
+"If your life were a movie, it would be...",
+"Your fashion sense screams...",
+"You look like you cry during...",
+"Your resume probably includes...",
+"If being annoying were a talent, you'd be...",
+"Your childhood probably explains why you...",
+"You have the charm of...",
+"Your Tinder bio probably reads...",
+"If awkwardness were an art form, you'd be...",
+"You radiate the same energy as...",
+"Your laugh sounds like...",
+"If people could return you, the receipt would say...",
+"Your cooking probably tastes like...",
+"You look like you'd lose a fight against...",
+"If your brain were a browser, it'd have...",
+"Your dance moves look like...",
+"You have the social skills of...",
+"If self-sabotage were a career, you'd be...",
+"Your pet probably...",
+"You act like you've never been told...",
+"Your biggest achievement is probably...",
+"If your personality were a candle, it'd smell like...",
+"You look like someone who Googles...",
+"Your handwriting looks like...",
+"If failure had a mascot, you'd be...",
+"You have the attention span of...",
+"Your last relationship ended because...",
+"You give off 'Reply All' energy because...",
+"If anxiety were a person, it would...",
+"Your workout routine is probably...",
+"Your spirit Uber rating is...",
+"If your brain had a Yelp review, it'd say...",
+"Your idea of adventure is...",
+"You seem like you'd apologize for...",
+"If your life had a soundtrack, it'd be...",
+"You have the decisiveness of...",
+"Your morning routine probably involves...",
+"If passive-aggression were currency, you'd be...",
+"You peaked at age...",
+"Your comfort food is clearly...",
+"You have the poker face of...",
+"If commitment issues had a mascot, you'd be...",
+"Your browser history probably looks like...",
+"If overthinking burned calories, you'd be...",
+"Your idea of flirting is...",
+"You have the patience of...",
+"If your personality were a font, it'd be...",
+"Your go-to excuse is probably...",
+"If being a letdown were hereditary, you'd be...",
+"Your emotional support animal would be...",
+"You act like you invented...",
+"If cringe were a sport, you'd be...",
+"Your survival strategy is...",
+"You have the self-esteem of...",
+"If your confidence were weather, it'd be...",
+"You argue like someone who...",
+"If regret had a smell, yours would be...",
+"Your future probably looks like...",
+"If delusion were a drug, you'd be...",
+"Your sense of humor is basically...",
+"You look like you'd get rejected by...",
+"If your ego were a building, it'd be...",
+"Your text messages read like...",
+"If your life were a Google search, it'd be...",
+"You have the rizz of...",
+"Your LinkedIn probably says...",
+"If rock bottom had a basement, you'd be...",
+"You give off the same energy as...",
+"Your type is clearly...",
+"If your love life were a movie genre, it'd be...",
+"You look like you unironically...",
+"Your spirit emoji is...",
+"If your personality were a sandwich, it'd be...",
+"Your DMs probably look like...",
+"If insomnia were a person, it'd...",
+"Your backup plan is probably...",
+"You have the charm of someone who...",
+"If your life were a subreddit, it'd be...",
+"Your ex probably describes you as...",
+"If low standards were a lifestyle, you'd be...",
+"You have the same energy as...",
+"Your ideal vacation is probably...",
+"If being forgettable were a skill, you'd be...",
+"Your autobiography would be called...",
+"You look like your credit score is...",
+"If your potential were a battery, it'd be...",
+"Your taste in music is basically...",
+"If second-hand embarrassment were fatal, you'd be...",
+"You probably peaked in...",
+"Your spirit animal during sex is...",
+"If therapy had a frequent flyer program, you'd be...",
+"You dress like...",
+"Your idea of a good time is...",
+"If emotional baggage had an airline, you'd be...",
+"Your group project energy is...",
+"If people could unsubscribe from you, they'd...",
+"Your villain origin story is probably...",
+"If your insecurities had a highlight reel, it'd show...",
+"You have the stamina of...",
+"Your apology sounds like...",
+"If your personality were a spice, it'd be...",
+"Your search history at 3 AM is probably...",
+"If disappointment had a LinkedIn, yours would say...",
+"You seem like someone who'd...",
+"Your energy at parties is...",
+"If red flags were currency, you'd be..."
+],
+punch:[
+"...a participation trophy with abandonment issues.",
+"...a microwave burrito with trust issues.",
+"...you'd text your ex just to lose again.",
+"...you'd still get bronze for crying mid-sentence.",
+"...a Wi-Fi connection at your parents' house.",
+"...the limited edition collector's set.",
+"...apologizes to Siri.",
+"...what happens when therapy gives up.",
+"...a gas station sushi roll with ambition.",
+"...a LinkedIn influencer with a GED.",
+"...somebody Thanos would snap twice.",
+"...a participation medal at a funeral.",
+"...the human equivalent of a check engine light.",
+"...a screen door on a submarine.",
+"...wet socks on a Monday.",
+"...a group text nobody asked to be in.",
+"...Comic Sans on a resume.",
+"...a Craigslist couch with a 'free' sign.",
+"...a PowerPoint presentation at a house party.",
+"...the terms and conditions nobody reads.",
+"...a rental car nobody bought the insurance for.",
+"...an expired coupon with confidence.",
+"...a 'Live Laugh Love' sign in a crack house.",
+"...a motivational poster in a DMV.",
+"...someone who claps when the plane lands.",
+"...a candle that smells like regret and Axe body spray.",
+"...the last pick in dodgeball. Every time.",
+"...a spam folder with feelings.",
+"...a voicemail nobody listens to.",
+"...a 2-star Uber driver with 1-star conversation.",
+"...a calculator at a poetry slam.",
+"...the WiFi password at a therapy office.",
+"...someone who peaked at their elementary school talent show.",
+"...a pregnancy scare at a family reunion.",
+"...a strongly worded Yelp review of your own birth.",
+"...a conspiracy theory with spell check off.",
+"...the off-brand version of a person nobody wanted anyway.",
+"...the free trial that nobody converts.",
+"...a read receipt with no reply. Ever.",
+"...a clearance rack personality.",
+"...someone who brings a guitar to a party unironically.",
+"...a burner phone with attachment issues.",
+"...a fortune cookie that just says 'yikes.'",
+"...the human version of an unsaved Word document.",
+"...a coupon for emotional damage.",
+"...3 AM gas station nachos with delusions of grandeur.",
+"...a Costco sample that peaked early.",
+"...what happens when you order confidence on Wish.",
+"...a LinkedIn endorsement from your mom.",
+"...someone who corrects grammar during a breakup text.",
+"...a TED Talk about nothing given by nobody.",
+"...the emotional equivalent of stepping in something wet wearing socks.",
+"...a warning label written in Comic Sans.",
+"...a screensaver on a computer nobody uses.",
+"...a trust fall with no one behind you.",
+"...a gym membership used once in January.",
+"...someone who puts raisins in potato salad.",
+"...an out-of-office reply that never comes back.",
+"...a haunted house that's mostly just sad.",
+"...a Google Maps route to nowhere important.",
+"...a diary entry your cat wouldn't even read.",
+"...a group project where everyone else dropped the class.",
+"...the snooze button on an alarm that never matters.",
+"...someone who microwaves fish at the office.",
+"...the fine print on a terrible deal.",
+"...a dating app profile pic from 2016.",
+"...a car alarm nobody looks up at.",
+"...someone who asks 'are you gonna eat that?' at a funeral.",
+"...a self-help book written by a dumpster fire.",
+"...a birthday party where only your mom came.",
+"...the Nickelback of people.",
+"...a hot dog in a world that asked for steak.",
+"...a Crocs with socks at a black-tie event.",
+"...someone who pees sitting down and still misses.",
+"...a vegan who does CrossFit and nobody cares about either.",
+"...a 'this meeting could have been an email' situation.",
+"...a personality developed entirely from memes.",
+"...a CAPTCHA that even bots skip.",
+"...the awkward silence at the end of a bad joke.",
+"...someone who brings a clipboard to a house party.",
+"...a participation trophy in the game of natural selection.",
+"...the living embodiment of an unseasoned chicken breast.",
+"...someone who replies 'K' to love confessions.",
+"...a GPS that recalculates into a ditch.",
+"...a potluck dish everyone avoids.",
+"...the human equivalent of an unskippable ad.",
+"...someone who cries at car insurance commercials.",
+"...a Netflix show that gets cancelled after one episode.",
+"...the designated ugly friend. On purpose.",
+"...a typo in your own name.",
+"...someone who fact-checks jokes at parties.",
+"...a haunted house that's just you talking about your childhood.",
+"...a participation trophy that participates in nothing.",
+"...a DM that starts with 'hey big head.'",
+"...the spare tire nobody actually uses.",
+"...someone who describes themselves as 'fluent in sarcasm.'",
+"...a sad trombone sound effect in human form.",
+"...a slow clap at your own funeral.",
+"...someone who sends good morning texts to their landlord.",
+"...a gender reveal party for a personality disorder.",
+"...the human version of 'this page cannot be displayed.'",
+"...a breakup text sent to the wrong person.",
+"...a Pinterest board called 'Goals I'll Never Reach.'",
+"...someone who says 'irregardless' with confidence.",
+"...the elevator music of human beings.",
+"...a WebMD diagnosis that's always correct about you.",
+"...the rejected first draft of a better person.",
+"...someone who bought crypto at the top. Twice.",
+"...a mirror that apologizes for what it has to show.",
+"...the person who reminds the teacher about homework.",
+"...a speed bump in the parking lot of life.",
+"...an emotional support Red Bull.",
+"...someone who sneezes with their eyes open. Like a psychopath.",
+"...a government-issued personality.",
+"...someone who uses their real name on a burner account.",
+"...the 'before' picture in every ad.",
+"...a fire alarm that everyone ignores.",
+"...someone who quotes The Office as a personality trait.",
+"...a microwave that only heats the outside.",
+"...a 'no refunds' policy in human form.",
+"...someone who pre-games for a dentist appointment.",
+"...the background noise in someone else's life.",
+"...a spam email that thinks it has a chance.",
+"...someone who gets peer-pressured by fortune cookies.",
+"...a personality built entirely on being 'brutally honest.'",
+"...someone who tries to split the bill after ordering lobster.",
+"...the emotional equivalent of a wet handshake.",
+"...a résumé written in crayon.",
+"...someone who'd bring a salad to a barbecue. Unironically.",
+"...a 404 error with a pulse.",
+"...a Yelp review of your own existence. One star.",
+"...someone who googles 'am I funny' after every conversation.",
+"...the human equivalent of airplane food.",
+"...someone who still uses MapQuest.",
+"...a hallmark card for a restraining order.",
+"...the type to get catfished by their own selfie.",
+"...someone who wears sunglasses indoors and still can't see their own flaws.",
+"...a group text you can't leave.",
+"...someone who argues with their horoscope.",
+"...the person who brings their own fork to a buffet.",
+"...a password that's just 'password123.'",
+"...someone who peaked at a participation ribbon.",
+"...a vending machine that only takes your money.",
+"...an unread notification from your own conscience.",
+"...someone who high-fives themselves.",
+"...a treadmill. Going nowhere, loudly.",
+"...a smoke detector with dead batteries. And somehow still annoying.",
+"...someone who puts ketchup on steak. Enthusiastically.",
+"...the intermission nobody asked for.",
+"...a wellness influencer selling sadness.",
+"...someone who cries at their own Instagram stories.",
+"...a warning shot that missed.",
+"...an inspirational poster in a condemned building.",
+"...someone who says 'I'm fine' while on fire.",
+"...the only person who lost at solitaire.",
+"...a Bluetooth speaker at a library.",
+"...someone who rehearses arguments in the shower and still loses.",
+"...a candle lit for no one.",
+"...the emotional maturity of a kickball.",
+"...someone whose plants die out of spite.",
+"...a GoFundMe for your own personality.",
+"...the human equivalent of a junk drawer.",
+"...someone who's lactose intolerant but still orders extra cheese on life.",
+"...the last message in a dead group chat.",
+"...a 'Live, Laugh, Love' tattoo on a bad decision.",
+"...someone who gets ghosted by their own reflection.",
+"...a wrong number that keeps calling back.",
+"...the emotional support for no one in particular.",
+"...a late-night infomercial but it's just your life.",
+"...a grocery list for a sad meal.",
+"...someone who got lost on a straight road.",
+"...a protest sign with a typo.",
+"...an unfinished sentence that nobody—",
+"...someone who waves back at people waving at someone else.",
+"...the human equivalent of holding in a sneeze.",
+"...a coupon that expired the day you were born.",
+"...someone who Venmo-requests their therapist.",
+"...a yoga mat that's never seen a pose.",
+"...the last result on the first page of Google.",
+"...a birthday card from your dentist.",
+"...someone who says 'no offense' and then chooses violence.",
+"...a tutorial video nobody watches past the intro.",
+"...a scented candle that smells like missed potential.",
+"...someone whose autocorrect has given up.",
+"...the bloopers reel of the human race.",
+"...a speed dating event where everyone walks out."
+],
+wild:[
+{n:"Double Tap",d:"Play TWO Punch cards this round",e:"double"},
+{n:"Group Roast",d:"Everyone roasts the same target. No mercy.",e:"group"},
+{n:"Reverse Roast",d:"Target roasts the roaster instead",e:"reverse"},
+{n:"You Wish",d:"Target must roast THEMSELVES",e:"self"},
+{n:"Make It Personal",d:"Must say the target's name in the roast",e:"personal"},
+{n:"Therapy Session",d:"Target picks who roasts them first",e:"therapy"},
+{n:"Crowd Work",d:"Everyone adds one word to a group roast",e:"crowd"},
+{n:"Identity Theft",d:"Roast the target AS someone else at the table",e:"identity"},
+{n:"Plot Twist",d:"Roast yourself instead. Hardest flex.",e:"plot"},
+{n:"Scorched Earth",d:"Winner gets TWO tears this round",e:"scorched"},
+{n:"Immunity",d:"Can't be voted against for one round",e:"immunity"},
+{n:"Steal",d:"Take a Tear from any player (if they have one)",e:"steal"},
+{n:"Recount",d:"Force a re-vote. Democracy is a suggestion.",e:"recount"},
+{n:"Therapy Bill",d:"Target gets TWO therapy tokens instead of one",e:"bill"},
+{n:"Pile On",d:"Add your Punch to someone else's Setup",e:"pileon"},
+{n:"No Context",d:"Play your Punch card with NO setup. Just vibes.",e:"nocontext"},
+{n:"Roast Roulette",d:"Spin for a random target. Original target is safe.",e:"roulette"},
+{n:"Callback",d:"Re-use any Punch card played in a previous round",e:"callback"},
+{n:"Mic Drop",d:"If you win this round, the game ends. You win everything.",e:"micdrop"},
+{n:"Too Far",d:"Anyone can veto a roast. Player must redraw.",e:"toofar"},
+{n:"Tag Team",d:"Pick a partner. Combine TWO setups + TWO punches.",e:"tagteam"},
+{n:"Last Words",d:"Target gets to deliver a comeback after all roasts",e:"lastwords"},
+{n:"Speed Round",d:"Everyone has 15 seconds to pick. Go.",e:"speed"},
+{n:"Mystery Card",d:"Play a random Punch card sight unseen",e:"mystery"},
+{n:"Sacrifice",d:"Give up one of your Tears to play 3 Punch cards",e:"sacrifice"},
+{n:"Truth Bomb",d:"Must roast with something actually true about the target",e:"truth"},
+{n:"Accent Required",d:"Must read the roast in an accent. Table picks which.",e:"accent"},
+{n:"Whisper Round",d:"Must whisper the roast. Somehow makes it worse.",e:"whisper"},
+{n:"Standing Ovation",d:"If everyone laughs, roaster gets 2 Tears",e:"ovation"},
+{n:"Deflection",d:"Redirect the roast to the person on your left",e:"deflect"},
+{n:"Emotional Damage",d:"Target loses a Therapy Token (if they have one)",e:"emotional"},
+{n:"Full Send",d:"Play your entire hand. All setups + all punches. Chaos.",e:"fullsend"}
+]};
+
+// =====================================================
+// GAME STATE
+// =====================================================
+let G={
+  players:[],     // [{name,tears:0,therapy:0}]
+  round:1,
+  targetIdx:0,
+  currentPI:0,    // index into non-target player list
+  nonTargets:[],  // player names (non-target this round)
+  hands:{},       // name -> {setup:[], punch:[], wild:null}
+  selections:{},  // name -> {setup:str, punch:str, punch2:str|null, wild:obj|null, wildActive:bool}
+  votes:{},       // voterName -> votedForName
+  voterIdx:0,
+  revealIdx:0,
+  usedSetup:new Set(),
+  usedPunch:new Set()
+};
+
+// =====================================================
+// UTILITIES
+// =====================================================
+function S(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pick(arr,n,used){
+  let avail=arr.filter((_,i)=>!used.has(i));
+  if(avail.length<n){used.clear();avail=[...arr]}
+  shuffle(avail);
+  const picked=avail.slice(0,n);
+  picked.forEach(c=>{const idx=arr.indexOf(c);used.add(idx)});
+  return picked;
+}
+function confetti(){
+  const colors=['#dc2626','#eab308','#f5f5f5','#ef4444','#facc15'];
+  for(let i=0;i<40;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDelay=Math.random()*1.5+'s';
+    el.style.width=(6+Math.random()*8)+'px';
+    el.style.height=(6+Math.random()*8)+'px';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }
+}
+
+// =====================================================
+// PLAYER SETUP
+// =====================================================
+function initSetup(){
+  const pl=document.getElementById('plist');
+  pl.innerHTML='';
+  G.players=[{name:'',tears:0,therapy:0},{name:'',tears:0,therapy:0},{name:'',tears:0,therapy:0},{name:'',tears:0,therapy:0}];
+  G.players.forEach((_,i)=>addPlayerRow(i));
+  updateSetup();
+}
+function addPlayerRow(i){
+  const pl=document.getElementById('plist');
+  const row=document.createElement('div');
+  row.className='player-row';
+  row.innerHTML=`<input type="text" placeholder="Player ${i+1}" maxlength="15" oninput="updateSetup()" data-idx="${i}"><button class="rbtn" onclick="removeP(${i})" ${G.players.length<=4?'style="visibility:hidden"':''}>✕</button>`;
+  pl.appendChild(row);
+  if(G.players[i].name)row.querySelector('input').value=G.players[i].name;
+}
+function addP(){
+  if(G.players.length>=10)return;
+  G.players.push({name:'',tears:0,therapy:0});
+  addPlayerRow(G.players.length-1);
+  updateSetup();
+  const inputs=document.querySelectorAll('#plist input');
+  inputs[inputs.length-1].focus();
+}
+function removeP(i){
+  if(G.players.length<=4)return;
+  G.players.splice(i,1);
+  rebuildList();
+  updateSetup();
+}
+function rebuildList(){
+  const pl=document.getElementById('plist');
+  const vals=[];
+  pl.querySelectorAll('input').forEach(inp=>vals.push(inp.value));
+  pl.innerHTML='';
+  G.players.forEach((p,i)=>{p.name=vals[i]||'';addPlayerRow(i)});
+}
+function updateSetup(){
+  const inputs=document.querySelectorAll('#plist input');
+  inputs.forEach((inp,i)=>{if(G.players[i])G.players[i].name=inp.value.trim()});
+  const valid=G.players.filter(p=>p.name.length>0);
+  const btn=document.getElementById('bstart');
+  btn.disabled=valid.length<4;
+  document.getElementById('pcount').textContent=`${valid.length}/10 players`;
+  document.getElementById('badd').disabled=G.players.length>=10;
+  document.querySelectorAll('.player-row .rbtn').forEach(b=>b.style.visibility=G.players.length<=4?'hidden':'visible');
+}
+
+// =====================================================
+// GAME START
+// =====================================================
+function startGame(){
+  G.players=G.players.filter(p=>p.name.length>0);
+  if(G.players.length<4)return;
+  // Check duplicates
+  const names=new Set();
+  for(const p of G.players){
+    if(names.has(p.name.toLowerCase())){alert('Duplicate name: '+p.name);return}
+    names.add(p.name.toLowerCase());
+  }
+  G.players.forEach(p=>{p.tears=0;p.therapy=0});
+  G.round=1;
+  G.targetIdx=0;
+  G.usedSetup.clear();
+  G.usedPunch.clear();
+  showRoundIntro();
+}
+
+function showRoundIntro(){
+  document.getElementById('rlabel').textContent='Round '+G.round;
+  const target=G.players[G.targetIdx];
+  document.getElementById('tname').textContent=target.name;
+  const rp=document.getElementById('rplayers');
+  rp.innerHTML='';
+  G.players.forEach((p,i)=>{
+    if(i===G.targetIdx)return;
+    const tag=document.createElement('span');
+    tag.style.cssText='padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700;background:#262626;border:1px solid #404040';
+    tag.textContent=p.name;
+    rp.appendChild(tag);
+  });
+  S('round');
+}
+
+// =====================================================
+// ROUND START - DEAL CARDS
+// =====================================================
+function startRound(){
+  G.nonTargets=G.players.filter((_,i)=>i!==G.targetIdx).map(p=>p.name);
+  G.hands={};
+  G.selections={};
+  G.votes={};
+  G.currentPI=0;
+  G.revealIdx=0;
+  // Deal cards to each non-target player
+  G.nonTargets.forEach(name=>{
+    const setups=pick(CARDS.setup,4,G.usedSetup);
+    const punches=pick(CARDS.punch,4,G.usedPunch);
+    const wild=Math.random()<0.4?CARDS.wild[Math.floor(Math.random()*CARDS.wild.length)]:null;
+    G.hands[name]={setup:setups,punch:punches,wild};
+    G.selections[name]={setup:null,punch:null,punch2:null,wild:null,wildActive:false};
+  });
+  showPassScreen();
+}
+
+function showPassScreen(){
+  if(G.currentPI>=G.nonTargets.length){
+    showRevealScreen();
+    return;
+  }
+  document.getElementById('passn').textContent=G.nonTargets[G.currentPI];
+  S('pass');
+}
+
+// =====================================================
+// CARD SELECTION
+// =====================================================
+let selSetup=null,selPunch=null,selWild=false,selPunch2=null;
+let extraPunches=[];
+
+function showSelect(){
+  const name=G.nonTargets[G.currentPI];
+  const hand=G.hands[name];
+  selSetup=null;selPunch=null;selWild=false;selPunch2=null;
+  document.getElementById('selpn').textContent=name;
+  // Setup cards
+  const sh=document.getElementById('shand');
+  sh.innerHTML='';
+  hand.setup.forEach((c,i)=>{
+    const div=document.createElement('div');
+    div.className='card card-s';
+    div.textContent=c;
+    div.onclick=()=>{selSetup=c;sh.querySelectorAll('.card').forEach(d=>d.classList.remove('sel'));div.classList.add('sel');checkLock()};
+    sh.appendChild(div);
+  });
+  // Punch cards
+  const ph=document.getElementById('phand');
+  ph.innerHTML='';
+  hand.punch.forEach((c,i)=>{
+    const div=document.createElement('div');
+    div.className='card card-p';
+    div.textContent=c;
+    div.onclick=()=>{selPunch=c;ph.querySelectorAll('.card').forEach(d=>d.classList.remove('sel'));div.classList.add('sel');checkLock()};
+    ph.appendChild(div);
+  });
+  // Wild card
+  const ws=document.getElementById('wsec');
+  const wb=document.getElementById('selwb');
+  if(hand.wild){
+    ws.style.display='block';
+    wb.style.display='inline-flex';
+    const wh=document.getElementById('whand');
+    wh.innerHTML='';
+    const div=document.createElement('div');
+    div.className='card card-w';
+    div.innerHTML=`<div><b>${hand.wild.n}</b><br><span style="font-size:.75rem;font-weight:500">${hand.wild.d}</span></div>`;
+    div.onclick=()=>{selWild=!selWild;div.classList.toggle('sel',selWild)};
+    wh.appendChild(div);
+  }else{
+    ws.style.display='none';
+    wb.style.display='none';
+  }
+  document.getElementById('block').disabled=true;
+  S('select');
+}
+
+function checkLock(){
+  document.getElementById('block').disabled=!(selSetup&&selPunch);
+}
+
+function lockIn(){
+  const name=G.nonTargets[G.currentPI];
+  const hand=G.hands[name];
+  G.selections[name].setup=selSetup;
+  G.selections[name].punch=selPunch;
+  G.selections[name].wild=selWild?hand.wild:null;
+  G.selections[name].wildActive=selWild;
+  // Check for Double Tap
+  if(selWild&&hand.wild&&hand.wild.e==='double'){
+    showDoubleTap(name);
+    return;
+  }
+  G.currentPI++;
+  showPassScreen();
+}
+
+function showDoubleTap(name){
+  const hand=G.hands[name];
+  extraPunches=pick(CARDS.punch,4,G.usedPunch);
+  selPunch2=null;
+  const dh=document.getElementById('dhand');
+  dh.innerHTML='';
+  extraPunches.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='card card-p';
+    div.textContent=c;
+    div.onclick=()=>{selPunch2=c;dh.querySelectorAll('.card').forEach(d=>d.classList.remove('sel'));div.classList.add('sel');document.getElementById('bdlock').disabled=false};
+    dh.appendChild(div);
+  });
+  document.getElementById('bdlock').disabled=true;
+  S('double');
+}
+
+function lockDouble(){
+  const name=G.nonTargets[G.currentPI];
+  G.selections[name].punch2=selPunch2;
+  G.currentPI++;
+  showPassScreen();
+}
+
+// =====================================================
+// REVEAL
+// =====================================================
+function showRevealScreen(){
+  const target=G.players[G.targetIdx];
+  document.getElementById('revtgt').textContent=target.name;
+  document.getElementById('revcard').style.display='none';
+  document.getElementById('revc').textContent=`0 / ${G.nonTargets.length} roasts`;
+  document.getElementById('breveal').textContent='🔥 Show First Roast';
+  G.revealIdx=0;
+  S('reveal');
+}
+
+function nextReveal(){
+  if(G.revealIdx>=G.nonTargets.length){
+    startVoting();
+    return;
+  }
+  const name=G.nonTargets[G.revealIdx];
+  const sel=G.selections[name];
+  document.getElementById('revcard').style.display='block';
+  document.getElementById('revcard').style.animation='none';
+  requestAnimationFrame(()=>{document.getElementById('revcard').style.animation='cardFlip .6s ease'});
+  document.getElementById('revs').textContent=sel.setup;
+  let punchText=sel.punch;
+  if(sel.punch2)punchText+='\n'+sel.punch2;
+  document.getElementById('revp').textContent=punchText;
+  const wildEl=document.getElementById('revw');
+  if(sel.wildActive&&sel.wild){
+    wildEl.style.display='block';
+    wildEl.textContent='⚡ '+sel.wild.n+': '+sel.wild.d;
+  }else{
+    wildEl.style.display='none';
+  }
+  document.getElementById('reva').textContent='— '+name;
+  G.revealIdx++;
+  document.getElementById('revc').textContent=`${G.revealIdx} / ${G.nonTargets.length} roasts`;
+  document.getElementById('breveal').textContent=G.revealIdx>=G.nonTargets.length?'📊 Start Voting':'Next Roast →';
+}
+
+// =====================================================
+// VOTING
+// =====================================================
+function startVoting(){
+  G.voterIdx=0;
+  G.votes={};
+  showVotePass();
+}
+
+function showVotePass(){
+  // All players vote (including target)
+  if(G.voterIdx>=G.players.length){
+    tallyVotes();
+    return;
+  }
+  document.getElementById('vpn').textContent=G.players[G.voterIdx].name;
+  S('vpass');
+}
+
+let currentVote=null;
+function showVote(){
+  const voter=G.players[G.voterIdx].name;
+  currentVote=null;
+  document.getElementById('votern').textContent=voter;
+  const vo=document.getElementById('vopts');
+  vo.innerHTML='';
+  G.nonTargets.forEach(name=>{
+    if(name===voter)return; // can't vote for yourself
+    const sel=G.selections[name];
+    const div=document.createElement('div');
+    div.className='vote-card';
+    let html=`<p style="color:var(--gray);font-size:.8rem;font-weight:600">${sel.setup}</p>`;
+    html+=`<p style="font-weight:700;font-size:.95rem;margin-top:3px">${sel.punch}</p>`;
+    if(sel.punch2)html+=`<p style="font-weight:700;font-size:.95rem;margin-top:2px">${sel.punch2}</p>`;
+    if(sel.wildActive&&sel.wild)html+=`<p style="font-size:.7rem;color:var(--gold);margin-top:4px">⚡ ${sel.wild.n}</p>`;
+    div.innerHTML=html;
+    div.onclick=()=>{
+      currentVote=name;
+      vo.querySelectorAll('.vote-card').forEach(d=>d.classList.remove('voted'));
+      div.classList.add('voted');
+      document.getElementById('bvote').disabled=false;
+    };
+    vo.appendChild(div);
+  });
+  document.getElementById('bvote').disabled=true;
+  S('vote');
+}
+
+function submitVote(){
+  G.votes[G.players[G.voterIdx].name]=currentVote;
+  G.voterIdx++;
+  showVotePass();
+}
+
+// =====================================================
+// TALLY & RESULTS
+// =====================================================
+function tallyVotes(){
+  // Count votes
+  const counts={};
+  G.nonTargets.forEach(n=>counts[n]=0);
+  Object.values(G.votes).forEach(v=>{if(counts[v]!==undefined)counts[v]++});
+  // Find winner(s)
+  const maxV=Math.max(...Object.values(counts));
+  const winners=Object.keys(counts).filter(n=>counts[n]===maxV);
+  // Tie-break: random
+  const winner=winners[Math.floor(Math.random()*winners.length)];
+  // Award tear
+  const wp=G.players.find(p=>p.name===winner);
+  // Check for Scorched Earth wild
+  const sel=G.selections[winner];
+  let tearsAwarded=1;
+  if(sel&&sel.wildActive&&sel.wild&&sel.wild.e==='scorched')tearsAwarded=2;
+  wp.tears+=tearsAwarded;
+  // Target gets therapy token
+  const target=G.players[G.targetIdx];
+  let therapyAwarded=1;
+  // Check if any wild gives extra therapy
+  for(const name of G.nonTargets){
+    const s=G.selections[name];
+    if(s&&s.wildActive&&s.wild&&s.wild.e==='bill')therapyAwarded=2;
+  }
+  target.therapy+=therapyAwarded;
+  // Show results
+  document.getElementById('resrl').textContent='Round '+G.round+' Results';
+  if(winners.length>1){
+    document.getElementById('reswn').textContent=winner;
+    document.getElementById('reswl').textContent=`Wins the tiebreaker! (${maxV} votes)`;
+  }else{
+    document.getElementById('reswn').textContent=winner;
+    document.getElementById('reswl').textContent=`Wins with ${maxV} vote${maxV!==1?'s':''}! (+${tearsAwarded} 😭)`;
+  }
+  // Show winning roast
+  if(sel){
+    document.getElementById('resbr').style.display='block';
+    document.getElementById('resrs').textContent=sel.setup;
+    document.getElementById('resrp').textContent=sel.punch+(sel.punch2?' '+sel.punch2:'');
+  }
+  // Scoreboard
+  renderScoreboard('ressb',winner,G.targetIdx);
+  confetti();
+  // Check win condition
+  if(wp.tears>=5){
+    document.getElementById('bnr').textContent='🏆 See Final Results';
+    document.getElementById('bnr').onclick=()=>showGameOver(winner);
+  }else{
+    document.getElementById('bnr').textContent='Next Round →';
+    document.getElementById('bnr').onclick=nextRound;
+  }
+  S('results');
+}
+
+function renderScoreboard(elId,winnerName,targetIdx){
+  const sb=document.getElementById(elId);
+  sb.innerHTML='';
+  const sorted=[...G.players].sort((a,b)=>b.tears-a.tears);
+  sorted.forEach(p=>{
+    const row=document.createElement('div');
+    row.className='score-row';
+    if(p.name===winnerName)row.classList.add('sw');
+    if(G.players.indexOf(p)===targetIdx)row.classList.add('st');
+    let tokens='😭'.repeat(p.tears);
+    if(p.therapy>0)tokens+=' <span style="color:var(--gold);font-size:.7rem">🛋️×'+p.therapy+'</span>';
+    row.innerHTML=`<span style="font-weight:700;font-size:.9rem">${p.name}</span><span style="font-size:.85rem">${tokens||'—'}</span>`;
+    sb.appendChild(row);
+  });
+}
+
+// =====================================================
+// NEXT ROUND / GAME OVER
+// =====================================================
+function nextRound(){
+  G.round++;
+  G.targetIdx=(G.targetIdx+1)%G.players.length;
+  showRoundIntro();
+}
+
+function showGameOver(winnerName){
+  document.getElementById('gow').textContent=winnerName;
+  renderScoreboard('gosb',winnerName,-1);
+  // Pity prize
+  const maxTherapy=Math.max(...G.players.map(p=>p.therapy));
+  if(maxTherapy>=3){
+    const tp=G.players.filter(p=>p.therapy>=3);
+    if(tp.length>0){
+      document.getElementById('goth').style.display='block';
+      document.getElementById('gothn').textContent=tp.map(p=>p.name).join(', ');
+    }
+  }else{
+    document.getElementById('goth').style.display='none';
+  }
+  confetti();
+  setTimeout(confetti,800);
+  setTimeout(confetti,1600);
+  S('gameover');
+}
+
+function playAgain(){
+  G.players.forEach(p=>{p.tears=0;p.therapy=0});
+  G.round=1;
+  G.targetIdx=0;
+  G.usedSetup.clear();
+  G.usedPunch.clear();
+  showRoundIntro();
+}
+
+// =====================================================
+// INIT
+// =====================================================
+// When setup screen shown, init players
+const origS=S;
+S=function(id){
+  origS(id);
+  if(id==='setup')initSetup();
+};
+
+// Service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
